@@ -10,4 +10,4 @@ RUN apt-get upgrade -y
 RUN pip install -r requirements.txt
 
 
-CMD ["python", "-m", "main.py"]
+CMD ["python", "main.py"]
