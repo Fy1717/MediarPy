@@ -8,6 +8,7 @@ from app.jwtAuthorize import login_required
 apiUsers = Blueprint("apiUsers", __name__, url_prefix="/api/users")
 queries = User
 
+
 @apiUsers.route("/")
 @login_required
 def users(current_user):
@@ -168,47 +169,47 @@ def update(current_user, id):
 @apiUsers.route("/addUser", methods=["GET", "POST"])
 def addUser():
     """
-        Add an Application Form
-        Function to add a user to apply. Returns a 30 minute valid token for future endpoints in application process
-        ---
-        tags:
-          - User
-        consumes: [multipart/form-data]
-        parameters:
-          - in: formData
-            name: name
-            type: string
-            required: true
-            description: Name of person
-          - in: formData
-            name: surname
-            type: string
-            required: true
-            description: Surname of person
-          - in: formData
-            name: personal_number
-            type: string
-            required: true
-            description: T.C. Id Number
-          - in: formData
-            name: email
-            type: string
-            required: true
-            description: Valid email of person
-          - in: formData
-            name: birth_date
-            type: string
-            required: true
-            description: Birth date in format dd-mm-YYYY
-          - in: formData
-            name: profession
-            type: string
-            required: true
-            description: Profession of person
-        security:
-        responses:
-          200:
-            description: Successful
+    Add an Application Form
+    Function to add a user to apply. Returns a 30 minute valid token for future endpoints in application process
+    ---
+    tags:
+      - User
+    consumes: [multipart/form-data]
+    parameters:
+      - in: formData
+        name: name
+        type: string
+        required: true
+        description: Name of person
+      - in: formData
+        name: surname
+        type: string
+        required: true
+        description: Surname of person
+      - in: formData
+        name: personal_number
+        type: string
+        required: true
+        description: T.C. Id Number
+      - in: formData
+        name: email
+        type: string
+        required: true
+        description: Valid email of person
+      - in: formData
+        name: birth_date
+        type: string
+        required: true
+        description: Birth date in format dd-mm-YYYY
+      - in: formData
+        name: profession
+        type: string
+        required: true
+        description: Profession of person
+    security:
+    responses:
+      200:
+        description: Successful
     """
 
     try:

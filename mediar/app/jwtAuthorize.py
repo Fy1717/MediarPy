@@ -58,6 +58,7 @@ def login_required(f):
                 ),
                 401,
             )
+
         return f(current_user, *args, **kwargs)
 
     return decorator
