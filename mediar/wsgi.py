@@ -23,7 +23,7 @@ except Exception as e:
 
 try:
     conn.execute("commit")
-    conn.execute("CREATE DATABASE mediar")
+    conn.execute("CREATE DATABASE postgres")
     conn.close()
     print("------------- Database created successfully ---------- ")
 except Exception as e:
