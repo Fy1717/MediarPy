@@ -8,7 +8,10 @@ RUN apt-get update
 RUN apt install -y libgl1-mesa-glx
 RUN pip install -r app/requirements.txt
 
-#RUN python -m app.initilize.initilize_db
+EXPOSE 8081
+#CMD ["python","-m", "app.initialize_db"]
+
+#CMD ["flask", "run", "--host=0.0.0.0", "--port=8081"]
 
 CMD ["uwsgi", "app.ini"]
 

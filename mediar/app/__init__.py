@@ -3,10 +3,12 @@ import os
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import json
+from sqlalchemy import create_engine
 
 db = SQLAlchemy()
-database_uri = "postgresql://postgres:postgres@localhost:5433/mediar"
+database_uri = "postgresql://postgres:postgres@db:5432/mediar"
 
+engine = create_engine(database_uri, echo=True)
 
 def createApp():
     app = Flask(__name__, static_url_path="")
