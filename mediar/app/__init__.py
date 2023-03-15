@@ -6,7 +6,7 @@ import json
 from sqlalchemy import create_engine
 
 db = SQLAlchemy()
-database_uri = "postgresql://postgres:postgres@db:5433/postgres"
+database_uri = "postgresql://postgres:postgres@localhost:5432/mediar"
 
 engine = create_engine(database_uri, echo=True)
 

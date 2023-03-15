@@ -15,7 +15,7 @@ from api.admins import apiAdmins
 from api.users import apiUsers
 from api.shares import apiShares
 
-try:
+""" try:
     engine = sqlalchemy.create_engine('postgresql://postgres:postgres@db')  # connect to server
     conn = engine.connect()
 except Exception as e:
@@ -33,16 +33,15 @@ except Exception as e:
 app = createApp()
 with app.app_context():
     db.create_all()
-    print("------------- Database created successfully 22222222 ---------- ")
+    print("------------- Database created successfully 22222222 ---------- ") """
 
+app = createApp()
+CORS(app)
+createDB()
 
 app.register_blueprint(apiAdmins)
 app.register_blueprint(apiUsers)
 app.register_blueprint(apiShares)
-
-CORS(app)
-createDB()
-
 
 @app.route("/")
 def hello_world():
