@@ -34,7 +34,8 @@ def admins(current_user):
 
             response = {"data": admins, "count": len(admins)}
         else:
-            response = {"success": False, "error": "Only admin see all admins"}, 401
+            response = {"success": False,
+                        "error": "Only admin see all admins"}, 401
 
         return jsonify(response)
     except Exception as e:
@@ -89,7 +90,8 @@ def admin(current_user, id):
                     response = jsonify({"data": result})
                 else:
                     response = (
-                        jsonify({"success": False, "error": "Admin is not found"}),
+                        jsonify(
+                            {"success": False, "error": "Admin is not found"}),
                         404,
                     )
             else:
@@ -125,7 +127,8 @@ def makeadmin(current_user):
                     if isUserAdmin == False:
                         queries.makeadmin(id)
 
-                        response = jsonify({"message": "User updated to admin"})
+                        response = jsonify(
+                            {"message": "User updated to admin"})
                     else:
                         response = (
                             jsonify(

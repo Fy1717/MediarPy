@@ -44,7 +44,8 @@ def share(id):
 
             response = jsonify({"data": share})
         else:
-            response = jsonify({"success": False, "error": "Share is not found"}), 404
+            response = jsonify(
+                {"success": False, "error": "Share is not found"}), 404
 
         return response
     except Exception as e:
@@ -64,10 +65,12 @@ def addShare(current_user):
 
                 response = jsonify({"message": addProcess})
             else:
-                response = jsonify({"success": False, "error": "There is an error.."})
+                response = jsonify(
+                    {"success": False, "error": "There is an error.."})
         else:
             response = (
-                jsonify({"success": False, "error": "This is not a post request.."}),
+                jsonify(
+                    {"success": False, "error": "This is not a post request.."}),
                 400,
             )
 

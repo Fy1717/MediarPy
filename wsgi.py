@@ -43,6 +43,7 @@ app.register_blueprint(apiAdmins)
 app.register_blueprint(apiUsers)
 app.register_blueprint(apiShares)
 
+
 @app.route("/")
 def hello_world():
     return jsonify({"backend": "FY", "frontend": "OD"})

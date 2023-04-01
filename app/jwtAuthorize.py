@@ -41,11 +41,13 @@ def login_required(f):
             if jwt.decode(token, "mediar-secret"):
                 data = jwt.decode(token, "mediar-secret")
                 current_user = queries.getOneUser(id=data["id"])
-                print("id: ", current_user.id, "\nusername: ", current_user.username)
+                print("id: ", current_user.id,
+                      "\nusername: ", current_user.username)
 
             if current_user == None:
                 return (
-                    jsonify({"success": False, "error": "Please login the system.."}),
+                    jsonify(
+                        {"success": False, "error": "Please login the system.."}),
                     401,
                 )
         except Exception as e:

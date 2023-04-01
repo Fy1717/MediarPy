@@ -169,7 +169,8 @@ user_following = db.Table(
     "user_following",
     db.Model.metadata,
     db.Column("user_id", db.Integer, db.ForeignKey(User.id), primary_key=True),
-    db.Column("following_id", db.Integer, db.ForeignKey(User.id), primary_key=True),
+    db.Column("following_id", db.Integer,
+              db.ForeignKey(User.id), primary_key=True),
 )
 
 

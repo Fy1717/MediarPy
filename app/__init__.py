@@ -10,6 +10,7 @@ database_uri = "postgresql://postgres:postgres@localhost:5432/mediar"
 
 engine = create_engine(database_uri, echo=True)
 
+
 def createApp():
     app = Flask(__name__, static_url_path="")
     app.config["SQLALCHEMY_DATABASE_URI"] = database_uri

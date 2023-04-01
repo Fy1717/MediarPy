@@ -118,7 +118,8 @@ def update(current_user, id):
                 if password == None:
                     password = user.password
                 else:
-                    password = generate_password_hash(password, method="sha256")
+                    password = generate_password_hash(
+                        password, method="sha256")
 
                 if image == None:
                     image = user.image
@@ -147,7 +148,8 @@ def update(current_user, id):
                 response = jsonify({"message": "User updated successfully"})
             else:
                 response = (
-                    jsonify({"success": False, "error": "This is not a post request"}),
+                    jsonify(
+                        {"success": False, "error": "This is not a post request"}),
                     400,
                 )
         else:
@@ -226,7 +228,8 @@ def addUser():
                 and birthday != None
                 and password != None
             ):
-                hashed_password = generate_password_hash(password, method="sha256")
+                hashed_password = generate_password_hash(
+                    password, method="sha256")
 
                 user = {
                     "username": username,
