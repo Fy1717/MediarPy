@@ -6,6 +6,87 @@ from datetime import date
 
 # -------------------------------------------------------
 
+@dataclass
+class Share(db.Model):
+    __tablename__ = "share"
+
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.String)
+    author = db.Column(db.Integer, db.ForeignKey("user.id"))
+    point = db.Column(db.Integer, default=0)
+    created_date = db.Column(db.DateTime, default=date.today())
+
+    def __init__(self, content, author, point, created_date):
+        self.content = content
+        self.point = point
+        self.author = author
+        self.created_date = created_date
+
+    @classmethod
+    def getAllShares(cls):
+        try:
+            results = cls.query.all()
+        except Exception as e:
+            print("ERROR --> ", e)
+
+            results = []
+
+        return results
+
+    @classmethod
+    def addShare(cls, share):
+        try:
+            addingShare = cls(
+                content=share["content"],
+                point=0,
+                author=share["authorId"],
+                created_date=date.today(),
+            )
+
+            db.session.add(addingShare)
+            db.session.commit()
+
+            return "Share added successfully"
+        except Exception as e:
+            print("ERROR --> ", e)
+
+            return "Share could not added"
+
+    @classmethod
+    def getOneShare(cls, id):
+        try:
+            result = cls.query.get(id)
+        except Exception as e:
+            result = {}
+            print("ERROR --> ", e)
+
+        return result
+
+    @classmethod
+    def updateShare(cls, share):
+        try:
+            result = cls.query.get(share["id"])
+
+            result.content = share["content"]
+            result.point = share["point"]
+
+            db.session.commit()
+
+            return "Share update successfully"
+        except Exception as e:
+            return "Share update error"
+
+    @classmethod
+    def sharesOfAuthor(cls, author_id):
+        try:
+            result = cls.query.filter_by(author=author_id).all()
+        except Exception as e:
+            result = {}
+
+            print("ERROR --> ", e)
+
+        return result
+
 
 @dataclass
 class User(db.Model):
@@ -26,6 +107,14 @@ class User(db.Model):
         primaryjoin=lambda: User.id == user_following.c.user_id,
         secondaryjoin=lambda: User.id == user_following.c.following_id,
         backref="followers",
+    )
+
+    pointed_shares = db.relationship(
+        "Share",
+        lambda: user_pointed_shares,
+        primaryjoin=lambda: User.id == user_pointed_shares.c.user_id,
+        secondaryjoin=lambda: Share.id == user_pointed_shares.c.share_id,
+        backref="pointed_users",
     )
 
     @classmethod
@@ -166,6 +255,41 @@ class User(db.Model):
 
             return "not updated"
 
+    @classmethod
+    def point_share(cls, user_id, share_id):
+        try:
+            user = cls.query.get(user_id)
+            share = Share.query.get(share_id)
+
+            print("DB .. user : ", user)
+            print("DB .. share : ", share_id)
+            print("DB .. star table : ", user.pointed_shares)
+
+            user.pointed_shares.append(share)
+
+            db.session.commit()
+
+            return "pointed successfully"
+        except Exception as e:
+            print("HATA --> ", e)
+
+            return "not pointed"
+
+    @classmethod
+    def point_share_back(cls, user_id, share_id):
+        try:
+            user = cls.query.get(user_id)
+            share = Share.query.get(share_id)
+
+            user.pointed_shares.remove(share)
+            db.session.commit()
+
+            return "pointed back successfully"
+        except Exception as e:
+            print("ERROR --> ", e)
+
+            return "couldnt back point"
+
 
 user_following = db.Table(
     "user_following",
@@ -175,84 +299,10 @@ user_following = db.Table(
               db.ForeignKey(User.id), primary_key=True),
 )
 
-
-@dataclass
-class Share(db.Model):
-    __tablename__ = "share"
-
-    id = db.Column(db.Integer, primary_key=True)
-    content = db.Column(db.String)
-    author = db.Column(db.Integer, db.ForeignKey("user.id"))
-    point = db.Column(db.Integer, default=0)
-    created_date = db.Column(db.DateTime, default=date.today())
-
-    def __init__(self, content, author, point, created_date):
-        self.content = content
-        self.point = point
-        self.author = author
-        self.created_date = created_date
-
-    @classmethod
-    def getAllShares(cls):
-        try:
-            results = cls.query.all()
-        except Exception as e:
-            print("ERROR --> ", e)
-
-            results = []
-
-        return results
-
-    @classmethod
-    def addShare(cls, share):
-        try:
-            addingShare = cls(
-                content=share["content"],
-                point=0,
-                author=share["authorId"],
-                created_date=date.today(),
-            )
-
-            db.session.add(addingShare)
-            db.session.commit()
-
-            return "Share added successfully"
-        except Exception as e:
-            print("ERROR --> ", e)
-
-            return "Share could not added"
-
-    @classmethod
-    def getOneShare(cls, id):
-        try:
-            result = cls.query.get(id)
-        except Exception as e:
-            result = {}
-            print("ERROR --> ", e)
-
-        return result
-
-    @classmethod
-    def updateShare(cls, share):
-        try:
-            result = cls.query.get(share["id"])
-
-            result.content = share["content"]
-            result.point = share["point"]
-
-            db.session.commit()
-
-            return "Share update successfully"
-        except Exception as e:
-            return "Share update error"
-
-    @classmethod
-    def sharesOfAuthor(cls, author_id):
-        try:
-            result = cls.query.filter_by(author=author_id).all()
-        except Exception as e:
-            result = {}
-
-            print("ERROR --> ", e)
-
-        return result
+user_pointed_shares = db.Table(
+    "user_pointed_shares",
+    db.Model.metadata,
+    db.Column("user_id", db.Integer, db.ForeignKey(User.id), primary_key=True),
+    db.Column("share_id", db.Integer, db.ForeignKey(
+        Share.id), primary_key=True),
+)

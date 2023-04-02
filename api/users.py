@@ -29,6 +29,7 @@ def users(current_user):
                     "activated": user.activated,
                     "following": len(user.following),
                     "followers": len(user.followers),
+                    "countOfShares": len(user.pointed_shares)
                 }
             )
 
@@ -42,6 +43,13 @@ def users(current_user):
 def user(current_user, id):
     try:
         user = queries.getOneUser(id)
+
+        print("USER POINTED SHARES : ", user.pointed_shares)
+
+        idsOfPointedShares = []
+
+        for share in user.pointed_shares:
+            idsOfPointedShares.append(share.id)
 
         if user != None:
             result = {
@@ -72,6 +80,7 @@ def user(current_user, id):
                     }
                     for followerUser in user.followers
                 ],
+                "starred_shares": idsOfPointedShares
             }
 
             if result["id"] != None or result["id"] != "":
@@ -170,50 +179,6 @@ def update(current_user, id):
 
 @apiUsers.route("/addUser", methods=["GET", "POST"])
 def addUser():
-    """
-    Add an Application Form
-    Function to add a user to apply. Returns a 30 minute valid token for future endpoints in application process
-    ---
-    tags:
-      - User
-    consumes: [multipart/form-data]
-    parameters:
-      - in: formData
-        name: name
-        type: string
-        required: true
-        description: Name of person
-      - in: formData
-        name: surname
-        type: string
-        required: true
-        description: Surname of person
-      - in: formData
-        name: personal_number
-        type: string
-        required: true
-        description: T.C. Id Number
-      - in: formData
-        name: email
-        type: string
-        required: true
-        description: Valid email of person
-      - in: formData
-        name: birth_date
-        type: string
-        required: true
-        description: Birth date in format dd-mm-YYYY
-      - in: formData
-        name: profession
-        type: string
-        required: true
-        description: Profession of person
-    security:
-    responses:
-      200:
-        description: Successful
-    """
-
     try:
         if request.method == "POST":
             username = request.form.get("username")
@@ -299,6 +264,49 @@ def unfollow(current_user):
 
             if current_user.id != None and userId != None:
                 result = queries.unfollow(current_user.id, userId)
+
+                return jsonify({"message": result})
+            else:
+                return jsonify({"success": False})
+        else:
+            return jsonify({"success": False, "error": "This is not a post request"})
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+    
+
+@apiUsers.route("/point_share", methods=["GET", "POST"])
+@login_required
+def pointShare(current_user):
+    try:
+        if request.method == "POST":
+            shareId = request.form.get("shareId")
+
+            print("CURRENT USER ID : ", current_user.id)
+            print("SHARE ID : ", shareId)
+
+            if current_user.id != None and shareId != None:
+                result = queries.point_share(current_user.id, shareId)
+
+                return jsonify({"message": result})
+            else:
+                return jsonify({"success": False})
+        else:
+            return jsonify({"success": False, "error": "This is not a post request"})
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+    
+
+@apiUsers.route("/point_share_back", methods=["GET", "POST"])
+@login_required
+def pointShareBack(current_user):
+    try:
+        if request.method == "POST":
+            shareId = request.args.get("shareId")
+
+            if current_user.id != None and shareId != None:
+                result = queries.follow(current_user.id, shareId)
 
                 return jsonify({"message": result})
             else:

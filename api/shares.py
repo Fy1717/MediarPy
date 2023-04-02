@@ -1,15 +1,17 @@
 from flask import Blueprint, jsonify, request
 from app.models import Share
+from app.models import User
 from app.jwtAuthorize import login_required
 
 apiShares = Blueprint("apiShares", __name__, url_prefix="/api/shares")
-queries = Share
+shareQueries = Share
+userQueries = User
 
 
 @apiShares.route("/")
 def shares():
     try:
-        results = queries.getAllShares()
+        results = shareQueries.getAllShares()
 
         shares = []
 
@@ -20,6 +22,13 @@ def shares():
                     "content": share.content,
                     "point": share.point,
                     "author_id": share.author,
+                    "pointed_users": [
+                        {
+                            "user_id": pointedUser.id,
+                            "username": pointedUser.username,
+                        }
+                        for pointedUser in share.pointed_users
+                    ]
                 }
             )
 
@@ -31,7 +40,7 @@ def shares():
 @apiShares.route("/<int:id>")
 def share(id):
     try:
-        result = queries.getOneShare(id)
+        result = shareQueries.getOneShare(id)
         share = {}
 
         if result != None:
@@ -40,6 +49,13 @@ def share(id):
                 "content": result.content,
                 "point": result.point,
                 "authorId": result.author,
+                "pointed_users": [
+                    {
+                        "user_id": pointedUser.id,
+                        "username": pointedUser.username,
+                    }
+                    for pointedUser in result.pointed_users
+                ]
             }
 
             response = jsonify({"data": share})
@@ -61,7 +77,7 @@ def addShare(current_user):
 
             if content != None and current_user.id != None:
                 share = {"content": content, "authorId": current_user.id}
-                addProcess = queries.addShare(share)
+                addProcess = shareQueries.addShare(share)
 
                 response = jsonify({"message": addProcess})
             else:
@@ -82,7 +98,10 @@ def addShare(current_user):
 @apiShares.route("/sharesOfAuthor/<int:author_id>")
 def sharesOfAuthor(author_id):
     try:
-        results = queries.sharesOfAuthor(author_id)
+        results = shareQueries.sharesOfAuthor(author_id)
+        print("aa : ", results)
+        print("bb : ", results[0].pointed_users)
+        print("cc : ", results[0].pointed_users[1].id)
 
         shares = []
 
@@ -93,6 +112,14 @@ def sharesOfAuthor(author_id):
                     "content": share.content,
                     "point": share.point,
                     "author": share.author,
+                    "pointed_users_count": len(share.pointed_users),
+                    "pointed_users": [
+                        {
+                            "user_id": pointedUser.id,
+                            "username": pointedUser.username,
+                        }
+                        for pointedUser in share.pointed_users
+                    ]
                 }
             )
 
@@ -111,7 +138,7 @@ def update(current_user):
             point = request.form.get("point")
             authorId = current_user.id
 
-            updatingShare = queries.getOneShare(id)
+            updatingShare = shareQueries.getOneShare(id)
 
             if updatingShare.author == int(authorId):
                 if content == None:
@@ -120,7 +147,7 @@ def update(current_user):
                     point = updatingShare.point
 
                 share = {"id": id, "content": content, "point": point}
-                addProcess = queries.updateShare(share)
+                addProcess = shareQueries.updateShare(share)
 
                 response = jsonify({"message": addProcess})
             else:
