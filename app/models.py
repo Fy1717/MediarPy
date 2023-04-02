@@ -19,6 +19,7 @@ class User(db.Model):
     birthday = db.Column(db.DateTime, default=date.today())
     admin = db.Column(db.Boolean, default=False)
     activated = db.Column(db.Boolean, default=True)
+
     following = db.relationship(
         "User",
         lambda: user_following,
@@ -47,6 +48,7 @@ class User(db.Model):
                 admin=False,
                 activated=True,
                 password=user["password"],
+                email=user["email"]
             )
 
             db.session.add(addingUser)

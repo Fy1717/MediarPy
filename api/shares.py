@@ -19,7 +19,7 @@ def shares():
                     "id": share.id,
                     "content": share.content,
                     "point": share.point,
-                    "author": share.author,
+                    "author_id": share.author,
                 }
             )
 

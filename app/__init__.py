@@ -1,8 +1,6 @@
 from flask import Flask
-import os
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
-import json
 from sqlalchemy import create_engine
 
 db = SQLAlchemy()

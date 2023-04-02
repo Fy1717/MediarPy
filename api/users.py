@@ -340,11 +340,15 @@ def login():
                         "mediar-secret",
                     )
 
-                    session["token"] = token.decode("UTF-8")
+                    print("TOKEN : " + token)
+
+                    session["token"] = token
+
+                    print("SESSION TOKEN : " + session["token"])
 
                     user = {"id": user.id, "username": user.username}
 
-                    return jsonify({"data": user, "token": token.decode("UTF-8")})
+                    return jsonify({"data": user, "token": token})
                 else:
                     return jsonify({"success": False, "error": "Passwords not matched"})
             else:
@@ -352,7 +356,7 @@ def login():
         else:
             return jsonify({"success": False, "error": "This is not a Post request"})
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)})
+        return jsonify({"success": False, "error": str(e) + " User couldnt login"})
 
 
 @apiUsers.route("/logout")
