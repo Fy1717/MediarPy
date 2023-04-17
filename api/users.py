@@ -212,7 +212,7 @@ def addUser():
                             "success": False,
                             "error": "This username couldnt used, its already used",
                         }
-                    )
+                    ), 
                 else:
                     addProcess = queries.addUser(user)
 
@@ -261,6 +261,8 @@ def unfollow(current_user):
     try:
         if request.method == "POST":
             userId = request.args.get("userId")
+
+            print("USER ID : ", userId)
 
             if current_user.id != None and userId != None:
                 result = queries.unfollow(current_user.id, userId)
@@ -326,6 +328,9 @@ def login():
             username = request.form.get("username")
             password = request.form.get("password")
 
+            print("Username : ", username)
+            print("Password : ", password)
+
             if username == None and password == None:
                 print("yyyyyyyyy")
                 return jsonify({"success": False})
@@ -354,9 +359,9 @@ def login():
 
                     print("SESSION TOKEN : " + session["token"])
 
-                    user = {"id": user.id, "username": user.username}
+                    user = {"id": user.id, "username": user.username, "token": token, "email": user.email}
 
-                    return jsonify({"data": user, "token": token})
+                    return jsonify({"data": user})
                 else:
                     return jsonify({"success": False, "error": "Passwords not matched"})
             else:
