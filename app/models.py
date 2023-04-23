@@ -66,7 +66,6 @@ class Share(db.Model):
     def updateShare(cls, share):
         try:
             result = cls.query.get(share["id"])
-
             result.content = share["content"]
             result.point = share["point"]
 
@@ -102,6 +101,13 @@ class User(db.Model):
     birthday = db.Column(db.DateTime, default=date.today())
     admin = db.Column(db.Boolean, default=False)
     activated = db.Column(db.Boolean, default=True)
+    pointed_shares = db.relationship(
+        "Share",
+        lambda: user_pointed_shares,
+        primaryjoin=lambda: User.id == user_pointed_shares.c.user_id,
+        secondaryjoin=lambda: Share.id == user_pointed_shares.c.share_id,
+        backref="pointed_users",
+    )
 
     following = db.relationship(
         "User",
@@ -109,14 +115,6 @@ class User(db.Model):
         primaryjoin=lambda: User.id == user_following.c.user_id,
         secondaryjoin=lambda: User.id == user_following.c.following_id,
         backref="followers",
-    )
-
-    pointed_shares = db.relationship(
-        "Share",
-        lambda: user_pointed_shares,
-        primaryjoin=lambda: User.id == user_pointed_shares.c.user_id,
-        secondaryjoin=lambda: Share.id == user_pointed_shares.c.share_id,
-        backref="pointed_users",
     )
 
     @classmethod
@@ -293,6 +291,25 @@ class User(db.Model):
             print("ERROR --> ", e)
 
             return "couldnt back point"
+        
+    """ @classmethod
+    def pointed_shares_of_user(cls, user_id):
+        try:
+            shares = Share.query.filter_by(author=user_id).all()
+            user = cls.query.get(user_id)
+
+            print("DB .. user : ", user)
+            print("DB .. star table : ", user.pointed_shares)
+
+            user.
+
+            db.session.commit()
+
+            return "pointed successfully"
+        except Exception as e:
+            print("HATA --> ", e)
+
+            return "not pointed"  """
 
 
 user_following = db.Table(
@@ -310,3 +327,11 @@ user_pointed_shares = db.Table(
     db.Column("share_id", db.Integer, db.ForeignKey(
         Share.id), primary_key=True),
 )
+
+""" shares_starred_users = db.Table(
+    "shares_starred_users",
+    db.Model.metadata,
+    db.Column("user_id", db.Integer, db.ForeignKey(User.id), primary_key=True),
+    db.Column("share_id", db.Integer, db.ForeignKey(
+        Share.id), primary_key=True),
+) """

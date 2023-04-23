@@ -319,7 +319,7 @@ def pointShare(current_user):
             print("CURRENT USER ID : ", current_user.id)
             print("SHARE ID : ", shareId)
 
-            if current_user.id != None and shareId != None:
+            if current_user.id != None and shareId != None:  # kullanıcı kendi paylaşamasın amacı ile
                 result = queries.point_share(current_user.id, shareId)
 
                 return jsonify({"message": result})
@@ -356,25 +356,25 @@ def pointShareBack(current_user):
 def login():
     try:
         if request.method == "POST":
-            print("XXXXXXXXXX")
+            # print("XXXXXXXXXX")
             username = request.form.get("username")
             password = request.form.get("password")
 
-            print("Username : ", username)
-            print("Password : ", password)
+            # print("Username : ", username)
+            # print("Password : ", password)
 
             if username == None and password == None:
-                print("yyyyyyyyy")
+                # print("yyyyyyyyy")
                 return jsonify({"success": False})
 
             user = queries.getUserByUsername(username=username)
 
             if user != None:
-                print("DB DEN GELEN USER IN PASSWORD U : ", user.password)
-                print("İSTEKTEN GELEN PASSWORD : ", password)
+                # print("DB DEN GELEN USER IN PASSWORD U : ", user.password)
+                # print("İSTEKTEN GELEN PASSWORD : ", password)
 
                 if check_password_hash(user.password, password):
-                    print("user ıd ", user.id)
+                    # print("user ıd ", user.id)
 
                     token = jwt.encode(
                         {
@@ -385,13 +385,51 @@ def login():
                         "mediar-secret",
                     )
 
-                    print("TOKEN : " + token)
-
                     session["token"] = token
 
-                    print("SESSION TOKEN : " + session["token"])
-
                     sharesOfUser = shareQueries.sharesOfAuthor(user.id)
+
+                    followings = []
+                    followers = []
+                    sharesOfUserList = []
+
+                    for followingUser in user.following:
+                        followings.append({
+                            "Id": followingUser.id,
+                            "Username": followingUser.username,
+                            "Name": followingUser.name,
+                            "Email": followingUser.email,
+                            "Image": followingUser.image,
+                            "Birthday": followingUser.birthday,
+                        })
+
+                    for followerUser in user.followers:
+                        followings.append({
+                            "Id": followerUser.id,
+                            "Username": followerUser.username,
+                            "Name": followerUser.name,
+                            "Email": followerUser.email,
+                            "Image": followerUser.image,
+                            "Birthday": followerUser.birthday,
+                        })
+
+                    starredUserList = []
+                    for share in sharesOfUser:
+                        for starredUser in share.pointed_users:
+                            starredUserList.append({
+                                "id": starredUser.id,
+                                "username": starredUser.username,
+                                "image": starredUser.image,
+                                "name": starredUser.name
+                            })
+
+                        sharesOfUserList.append({
+                            "Id": share.id,
+                            "Content": share.content,
+                            "PointedUsers": starredUserList
+                        })
+
+                    totalPoints = len(starredUserList)
 
                     user = {
                         "id": user.id,
@@ -400,44 +438,10 @@ def login():
                         "token": token,
                         "email": user.email,
                         "image": user.image,
-                        "followings": [
-                            {
-                                "Id": followingUser.id,
-                                "Username": followingUser.username,
-                                "Name": followingUser.name,
-                                "Email": followingUser.email,
-                                "Image": followingUser.image,
-                                "Birthday": followingUser.birthday,
-                            }
-                            for followingUser in user.following
-                        ],
-                        "followers": [
-                            {
-                                "Id": followerUser.id,
-                                "Username": followerUser.username,
-                                "Name": followerUser.name,
-                                "Email": followerUser.email,
-                                "Image": followerUser.image,
-                                "Birthday": followerUser.birthday,
-                            }
-                            for followerUser in user.followers
-                        ],
-                        "starred_shares": [
-                            {
-                                "Id": share.id,
-                                "Content": share.content,
-                                "Point": share.point,
-                            }
-                            for share in user.pointed_shares
-                        ],
-                        "shares": [
-                            {
-                                "Id": share.id,
-                                "Content": share.content,
-                                "Point": share.point,
-                            }
-                            for share in sharesOfUser
-                        ]
+                        "followings": followings,
+                        "followers": followers,
+                        "shares": sharesOfUserList,
+                        "totalPoints": totalPoints,
                     }
 
                     response = {"success": True, "data": user, "message": ""}
@@ -454,7 +458,7 @@ def login():
     except Exception as e:
         print("ERROR : ", str(e))
 
-        return jsonify({"message": "User couldnt login"}), 401
+        return jsonify({"message": "There is a problem :("}), 401
 
 
 @apiUsers.route("/logout")
