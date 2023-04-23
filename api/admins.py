@@ -17,18 +17,19 @@ def admins(current_user):
 
             admins = []
 
-            for user in results:
+            for admin in results:
                 admins.append(
                     {
-                        "id": user.id,
-                        "username": user.username,
-                        "email": user.email,
-                        "image": user.image,
-                        "birthday": user.birthday,
-                        "admin": user.admin,
-                        "activated": user.activated,
-                        "following": len(user.following),
-                        "followers": len(user.followers),
+                        "id": admin.id,
+                        "username": admin.username,
+                        "name": admin.name,
+                        "email": admin.email,
+                        "image": admin.image,
+                        "birthday": admin.birthday,
+                        "admin": admin.admin,
+                        "activated": admin.activated,
+                        "following": len(admin.following),
+                        "followers": len(admin.followers),
                     }
                 )
 
@@ -57,6 +58,7 @@ def admin(current_user, id):
                 result = {
                     "id": admin.id,
                     "username": admin.username,
+                    "name": admin.username,
                     "image": admin.image,
                     "birthday": admin.birthday,
                     "admin": admin.admin,
@@ -66,6 +68,7 @@ def admin(current_user, id):
                         {
                             "Id": followingUser.id,
                             "Username": followingUser.username,
+                            "Name": followingUser.name,
                             "Email": followingUser.email,
                             "Image": followingUser.image,
                             "Birthday": followingUser.birthday,
@@ -76,6 +79,7 @@ def admin(current_user, id):
                         {
                             "Id": followerUser.id,
                             "Username": followerUser.username,
+                            "Name": followerUser.name,
                             "Email": followerUser.email,
                             "Image": followerUser.image,
                             "Birthday": followerUser.birthday,

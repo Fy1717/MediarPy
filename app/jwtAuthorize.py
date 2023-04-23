@@ -12,13 +12,17 @@ def login_required(f):
         token = None
         current_user = None
 
-        if "token" in session:
+        if "token" in session and str(token) != "None":
             print("-------token in session-------")
             token = session["token"]
             print("token session --> ", token)
         elif "token" in request.headers:
             print("-------token in headers-------")
             token = request.headers["token"]
+
+            if token == None:
+                token = request.headers.get("token")
+
             print("token headers --> ", token)
         else:
             session["token"] = "None"

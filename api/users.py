@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request, session
-from app.models import User
+from app.models import User, Share
 from werkzeug.security import generate_password_hash, check_password_hash
 import datetime
 import jwt
@@ -7,6 +7,7 @@ from app.jwtAuthorize import login_required
 
 apiUsers = Blueprint("apiUsers", __name__, url_prefix="/api/users")
 queries = User
+shareQueries = Share
 
 
 @apiUsers.route("/")
@@ -22,6 +23,7 @@ def users(current_user):
                 {
                     "id": user.id,
                     "username": user.username,
+                    "name": user.name,
                     "email": user.email,
                     "image": user.image,
                     "birthday": user.birthday,
@@ -46,49 +48,62 @@ def user(current_user, id):
 
         print("USER POINTED SHARES : ", user.pointed_shares)
 
-        idsOfPointedShares = []
+        sharesOfUser = shareQueries.sharesOfAuthor(id)
 
-        for share in user.pointed_shares:
-            idsOfPointedShares.append(share.id)
+        result = {
+            "id": user.id,
+            "username": user.username,
+            "name": user.name,
+            "image": user.image,
+            "birthday": user.birthday,
+            "admin": user.admin,
+            "activated": user.activated,
+            "email": user.email,
+            "followings": [
+                {
+                    "Id": followingUser.id,
+                    "Username": followingUser.username,
+                    "Name": followingUser.name,
+                    "Email": followingUser.email,
+                    "Image": followingUser.image,
+                    "Birthday": followingUser.birthday,
+                }
+                for followingUser in user.following
+            ],
+            "followers": [
+                {
+                    "Id": followerUser.id,
+                    "Username": followerUser.username,
+                    "Name": followerUser.name,
+                    "Email": followerUser.email,
+                    "Image": followerUser.image,
+                    "Birthday": followerUser.birthday,
+                }
+                for followerUser in user.followers
+            ],
+            "shares": [
+                {
+                    "Id": share.id,
+                    "Content": share.content,
+                    "Point": share.point,
+                }
+                for share in sharesOfUser
+            ],
+            "starred_shares": [
+                {
+                    "Id": share.id,
+                    "Content": share.content,
+                    "Point": share.point,
+                }
+                for share in user.pointed_shares
+            ]
+        }
 
-        if user != None:
-            result = {
-                "id": user.id,
-                "username": user.username,
-                "image": user.image,
-                "birthday": user.birthday,
-                "admin": user.admin,
-                "activated": user.activated,
-                "email": user.email,
-                "followings": [
-                    {
-                        "Id": followingUser.id,
-                        "Username": followingUser.username,
-                        "Email": followingUser.email,
-                        "Image": followingUser.image,
-                        "Birthday": followingUser.birthday,
-                    }
-                    for followingUser in user.following
-                ],
-                "followers": [
-                    {
-                        "Id": followerUser.id,
-                        "Username": followerUser.username,
-                        "Email": followerUser.email,
-                        "Image": followerUser.image,
-                        "Birthday": followerUser.birthday,
-                    }
-                    for followerUser in user.followers
-                ],
-                "starred_shares": idsOfPointedShares
-            }
-
-            if result["id"] != None or result["id"] != "":
-                return jsonify({"data": result})
-            else:
-                return jsonify({"success": False})
+        if result["id"] != None or result["id"] != "":
+            return jsonify({"data": result})
         else:
             return jsonify({"success": False})
+
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
 
@@ -102,6 +117,7 @@ def update(current_user, id):
 
             if request.method == "POST":
                 username = request.form.get("username")
+                name = request.form.get("name")
                 password = request.form.get("password")
                 image = request.form.get("image")
                 birthday = request.form.get("birthday")
@@ -142,9 +158,13 @@ def update(current_user, id):
                 if admin == None:
                     admin = user.admin
 
+                if name == None:
+                    name = user.name
+
                 user = {
                     "id": id,
                     "username": username,
+                    "name": name,
                     "image": image,
                     "birthday": birthday,
                     "password": password,
@@ -152,9 +172,18 @@ def update(current_user, id):
                     "admin": admin,
                 }
 
-                queries.updateUser(user)
+                updateMessageFromDbProcess = queries.updateUser(user)
 
-                response = jsonify({"message": "User updated successfully"})
+                print("UPDATE MESSAGE : ", updateMessageFromDbProcess)
+
+                if updateMessageFromDbProcess == "User Updated Successfully":
+                    response = jsonify({"message": updateMessageFromDbProcess})
+                else:
+                    response = (
+                        jsonify(
+                            {"success": False, "error": "There is an error for update user"}),
+                        400,
+                    )
             else:
                 response = (
                     jsonify(
@@ -182,6 +211,7 @@ def addUser():
     try:
         if request.method == "POST":
             username = request.form.get("username")
+            name = request.form.get("name")
             password = request.form.get("password")
             image = request.form.get("image")
             birthday = request.form.get("birthday")
@@ -192,12 +222,14 @@ def addUser():
                 and image != None
                 and birthday != None
                 and password != None
+                and name != None
             ):
                 hashed_password = generate_password_hash(
                     password, method="sha256")
 
                 user = {
                     "username": username,
+                    "name": name,
                     "image": image,
                     "birthday": birthday,
                     "password": hashed_password,
@@ -212,7 +244,7 @@ def addUser():
                             "success": False,
                             "error": "This username couldnt used, its already used",
                         }
-                    ), 
+                    ),
                 else:
                     addProcess = queries.addUser(user)
 
@@ -275,7 +307,7 @@ def unfollow(current_user):
 
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
-    
+
 
 @apiUsers.route("/point_share", methods=["GET", "POST"])
 @login_required
@@ -298,7 +330,7 @@ def pointShare(current_user):
 
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
-    
+
 
 @apiUsers.route("/point_share_back", methods=["GET", "POST"])
 @login_required
@@ -359,17 +391,70 @@ def login():
 
                     print("SESSION TOKEN : " + session["token"])
 
-                    user = {"id": user.id, "username": user.username, "token": token, "email": user.email}
+                    sharesOfUser = shareQueries.sharesOfAuthor(user.id)
 
-                    return jsonify({"data": user})
+                    user = {
+                        "id": user.id,
+                        "name": user.name,
+                        "username": user.username,
+                        "token": token,
+                        "email": user.email,
+                        "image": user.image,
+                        "followings": [
+                            {
+                                "Id": followingUser.id,
+                                "Username": followingUser.username,
+                                "Name": followingUser.name,
+                                "Email": followingUser.email,
+                                "Image": followingUser.image,
+                                "Birthday": followingUser.birthday,
+                            }
+                            for followingUser in user.following
+                        ],
+                        "followers": [
+                            {
+                                "Id": followerUser.id,
+                                "Username": followerUser.username,
+                                "Name": followerUser.name,
+                                "Email": followerUser.email,
+                                "Image": followerUser.image,
+                                "Birthday": followerUser.birthday,
+                            }
+                            for followerUser in user.followers
+                        ],
+                        "starred_shares": [
+                            {
+                                "Id": share.id,
+                                "Content": share.content,
+                                "Point": share.point,
+                            }
+                            for share in user.pointed_shares
+                        ],
+                        "shares": [
+                            {
+                                "Id": share.id,
+                                "Content": share.content,
+                                "Point": share.point,
+                            }
+                            for share in sharesOfUser
+                        ]
+                    }
+
+                    response = {"success": True, "data": user, "message": ""}
+
+                    print("RESPONSE :: ", response)
+
+                    return jsonify(response)
                 else:
-                    return jsonify({"success": False, "error": "Passwords not matched"})
+                    return jsonify({"message": "Passwords not matched"}), 401
             else:
-                return jsonify({"success": False, "error": "User not found"})
+                return jsonify({"message": "User not found"}), 401
         else:
-            return jsonify({"success": False, "error": "This is not a Post request"})
+            return jsonify({"message": "This is not a Post request"}), 401
     except Exception as e:
-        return jsonify({"success": False, "error": str(e) + " User couldnt login"})
+        print("ERROR : ", str(e))
+
+        return jsonify({"message": "User couldnt login"}), 401
 
 
 @apiUsers.route("/logout")
@@ -379,6 +464,6 @@ def logout(current_user):
         print("SESSION TOKEN : ", session["token"])
         session["token"] = "None"
 
-        return jsonify({"description": "User Logout"})
+        return jsonify({"success": True, "message": "User Logout"})
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)})
+        return jsonify({"error": "Logout Process Error"})

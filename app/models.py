@@ -80,8 +80,9 @@ class Share(db.Model):
     def sharesOfAuthor(cls, author_id):
         try:
             result = cls.query.filter_by(author=author_id).all()
+            print("---- shares of author : ", result, " ----")
         except Exception as e:
-            result = {}
+            result = []
 
             print("ERROR --> ", e)
 
@@ -94,9 +95,10 @@ class User(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(120))
+    name = db.Column(db.String(120))
     email = db.Column(db.String(120))
     password = db.Column(db.String(120))
-    image = db.Column(db.String(120))
+    image = db.Column(db.String(500))
     birthday = db.Column(db.DateTime, default=date.today())
     admin = db.Column(db.Boolean, default=False)
     activated = db.Column(db.Boolean, default=True)
@@ -132,6 +134,7 @@ class User(db.Model):
         try:
             addingUser = cls(
                 username=user["username"],
+                name=user["name"],
                 image=user["image"],
                 birthday=date.today(),
                 admin=False,
@@ -165,6 +168,7 @@ class User(db.Model):
             result = cls.query.get(user["id"])
 
             result.username = user["username"]
+            result.name =user["name"]
             result.image = user["image"]
             result.birthday = user["birthday"]
             result.email = user["email"]
@@ -175,12 +179,12 @@ class User(db.Model):
 
             db.session.commit()
 
-            return "updated"
+            return "User Updated Successfully"
 
         except Exception as e:
             print("ERROR --> ", e)
 
-            return "not updated"
+            return "There is an error for update user"
 
     @classmethod
     def follow(cls, user_id, following_id):
