@@ -190,10 +190,15 @@ class User(db.Model):
             user = cls.query.get(user_id)
             following = cls.query.get(following_id)
 
-            user.following.append(following)
-            db.session.commit()
+            if following not in user.following:
+                user.following.append(following)
 
-            return "followed"
+                db.session.commit()
+
+                return "followed"
+            else:
+                return "already followed"
+            
         except Exception as e:
             print("HATA --> ", e)
 
@@ -205,10 +210,13 @@ class User(db.Model):
             user = cls.query.get(user_id)
             following = cls.query.get(following_id)
 
-            user.following.remove(following)
-            db.session.commit()
+            if following in user.following:
+                user.following.remove(following)
+                db.session.commit()
 
-            return "unfollowed"
+                return "unfollowed"
+            else:
+                return "user not followed yet"
         except Exception as e:
             print("ERROR --> ", e)
 
@@ -263,15 +271,18 @@ class User(db.Model):
             user = cls.query.get(user_id)
             share = Share.query.get(share_id)
 
-            print("DB .. user : ", user)
-            print("DB .. share : ", share_id)
-            print("DB .. star table : ", user.pointed_shares)
+            if user.id != share.author:
+                print("DB .. user : ", user)
+                print("DB .. share : ", share_id)
+                print("DB .. star table : ", user.pointed_shares)
 
-            user.pointed_shares.append(share)
+                user.pointed_shares.append(share)
 
-            db.session.commit()
+                db.session.commit()
 
-            return "pointed successfully"
+                return "pointed successfully"
+            else:
+                return "user cannot pointed him shares"
         except Exception as e:
             print("HATA --> ", e)
 

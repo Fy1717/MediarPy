@@ -87,7 +87,7 @@ def addShare(current_user):
             response = (
                 jsonify(
                     {"success": False, "error": "This is not a post request.."}),
-                400,
+                405,
             )
 
         return response
@@ -160,7 +160,7 @@ def update(current_user):
         else:
             response = (
                 jsonify({"success": False, "error": "This is not a post request"}),
-                400,
+                405,
             )
 
         return response

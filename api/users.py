@@ -4,6 +4,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import datetime
 import jwt
 from app.jwtAuthorize import login_required
+import traceback
+
 
 apiUsers = Blueprint("apiUsers", __name__, url_prefix="/api/users")
 queries = User
@@ -188,7 +190,7 @@ def update(current_user, id):
                 response = (
                     jsonify(
                         {"success": False, "error": "This is not a post request"}),
-                    400,
+                    405,
                 )
         else:
             response = (
@@ -259,7 +261,7 @@ def addUser():
         else:
             response = (
                 jsonify({"success": False, "error": "This is not a post request"}),
-                400,
+                405,
             )
 
         return response
@@ -274,17 +276,23 @@ def follow(current_user):
         if request.method == "POST":
             userId = request.args.get("userId")
 
-            if current_user.id != None and userId != None:
-                result = queries.follow(current_user.id, userId)
+            print("USER ID : ", userId)
+            print("CURRENT USER ID : ", current_user.id)
 
-                return jsonify({"message": result})
+            if current_user.id != None and userId != None:
+                if str(current_user.id) == str(userId):
+                    return jsonify({"success": False, "error": "User cannot self-follow"}), 502 
+                else:
+                    result = queries.follow(current_user.id, userId)
+
+                    return jsonify({"message": result})
             else:
-                return jsonify({"success": False})
+                return jsonify({"success": False, "error": "There is an error :("}), 502
         else:
-            return jsonify({"success": False, "error": "This is not a post request"})
+            return jsonify({"success": False, "error": "This is not a post request"}), 405
 
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)})
+        return jsonify({"success": False, "error": str(e)}), 502
 
 
 @apiUsers.route("/unfollow", methods=["GET", "POST"])
@@ -295,18 +303,28 @@ def unfollow(current_user):
             userId = request.args.get("userId")
 
             print("USER ID : ", userId)
+            print("CURRENT USER ID : ", current_user.id)
 
+            if current_user.id == userId:
+                return jsonify({"success": False, "error": "User cannot self-unfollow"}), 502 
+            
             if current_user.id != None and userId != None:
-                result = queries.unfollow(current_user.id, userId)
+                if str(current_user.id) == str(userId):
+                    return jsonify({"success": False, "error": "User cannot self-unfollow"}), 502 
+                else:
+                    result = queries.unfollow(current_user.id, userId)
 
-                return jsonify({"message": result})
+                    if result == "unfollowed":
+                        return jsonify({"message": result})
+                    elif result == "user not followed yet":
+                        return jsonify({"success": False, "error": "User not followed yet"}), 403
             else:
-                return jsonify({"success": False})
+                return jsonify({"success": False, "message": "There is an error :("}), 502
         else:
-            return jsonify({"success": False, "error": "This is not a post request"})
+            return jsonify({"success": False, "error": "This is not a post request"}), 405
 
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)})
+        return jsonify({"success": False, "error": str(e)}), 502
 
 
 @apiUsers.route("/point_share", methods=["GET", "POST"])
@@ -320,16 +338,25 @@ def pointShare(current_user):
             print("SHARE ID : ", shareId)
 
             if current_user.id != None and shareId != None:  # kullanıcı kendi paylaşamasın amacı ile
+                print("shareId : ", shareId)
+
                 result = queries.point_share(current_user.id, shareId)
 
-                return jsonify({"message": result})
+                if result == "pointed successfully":
+
+                    return jsonify({"message": result})
+                else:
+                    if result == "user cannot pointed him shares":
+                        return jsonify({"success": False, "error": result}), 401
+                    else:
+                        return jsonify({"success": False, "error": "There is an error :("}), 502
             else:
-                return jsonify({"success": False})
+                return jsonify({"success": False, "error": "There is an error :("}), 502
         else:
-            return jsonify({"success": False, "error": "This is not a post request"})
+            return jsonify({"success": False, "error": "This is not a post request"}), 405
 
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)})
+        return jsonify({"success": False, "error": str(e)}), 503
 
 
 @apiUsers.route("/point_share_back", methods=["GET", "POST"])
@@ -340,16 +367,19 @@ def pointShareBack(current_user):
             shareId = request.args.get("shareId")
 
             if current_user.id != None and shareId != None:
-                result = queries.follow(current_user.id, shareId)
+                result = queries.point_share_back(current_user.id, shareId)
 
-                return jsonify({"message": result})
+                if result == "pointed back successfully":
+                    return jsonify({"success": True, "message": result})
+                else:
+                    return jsonify({"success": False, "error": "There is an error :("}), 502
             else:
-                return jsonify({"success": False})
+                return jsonify({"success": False, "error": "There is an error :("}), 502
         else:
-            return jsonify({"success": False, "error": "This is not a post request"})
+            return jsonify({"success": False, "error": "This is not a post request"}), 405
 
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)})
+        return jsonify({"success": False, "error": str(e)}), 503
 
 
 @apiUsers.route("/login", methods=["GET", "POST"])
@@ -404,7 +434,7 @@ def login():
                         })
 
                     for followerUser in user.followers:
-                        followings.append({
+                        followers.append({
                             "Id": followerUser.id,
                             "Username": followerUser.username,
                             "Name": followerUser.name,
@@ -429,6 +459,22 @@ def login():
                             "PointedUsers": starredUserList
                         })
 
+                    starredShareList = []
+                    for share in user.pointed_shares:
+                        starredShareList.append({
+                            "id": share.id,
+                            "content": share.content,
+                            "point": share.point,
+                            "author_id": share.author,
+                            "pointed_users": [
+                                {
+                                    "user_id": pointedUser.id,
+                                    "username": pointedUser.username,
+                                }
+                                for pointedUser in share.pointed_users
+                            ]
+                        })
+
                     totalPoints = len(starredUserList)
 
                     user = {
@@ -442,6 +488,7 @@ def login():
                         "followers": followers,
                         "shares": sharesOfUserList,
                         "totalPoints": totalPoints,
+                        "starred_shares": user.pointed_shares
                     }
 
                     response = {"success": True, "data": user, "message": ""}
@@ -454,20 +501,22 @@ def login():
             else:
                 return jsonify({"message": "User not found"}), 401
         else:
-            return jsonify({"message": "This is not a Post request"}), 401
+            return jsonify({"message": "This is not a Post request"}), 405
     except Exception as e:
         print("ERROR : ", str(e))
 
-        return jsonify({"message": "There is a problem :("}), 401
+        return jsonify({"message": "There is a problem :("}), 503
 
 
 @apiUsers.route("/logout")
 @login_required
 def logout(current_user):
     try:
-        print("SESSION TOKEN : ", session["token"])
         session["token"] = "None"
 
         return jsonify({"success": True, "message": "User Logout"})
     except Exception as e:
-        return jsonify({"error": "Logout Process Error"})
+        error_message = f"Logout Process Error: {e}\n{traceback.format_exc()}"
+        print(error_message)
+
+        return jsonify({"error": error_message}), 503
