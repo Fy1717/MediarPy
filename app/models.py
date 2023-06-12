@@ -85,6 +85,8 @@ class Share(db.Model):
 
             print("ERROR --> ", e)
 
+            return []
+
         return result
 
 
@@ -190,15 +192,28 @@ class User(db.Model):
             user = cls.query.get(user_id)
             following = cls.query.get(following_id)
 
-            if following not in user.following:
+            alreadyFollowedList = []
+
+            print("\n--- user_id : ", user_id, " ----")
+            print("--- following_id : ", following_id, " ----")
+            print("following list size : ", len(user.following))
+
+            for followingUser in user.following:
+                alreadyFollowedList.append(followingUser.id)
+
+            print("followed list : ", alreadyFollowedList)
+
+            if following.id in alreadyFollowedList:
+                print("already in followings..")
+
+                return "already followed"
+            else:
                 user.following.append(following)
 
                 db.session.commit()
 
                 return "followed"
-            else:
-                return "already followed"
-            
+                
         except Exception as e:
             print("HATA --> ", e)
 

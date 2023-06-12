@@ -16,26 +16,31 @@ shareQueries = Share
 @login_required
 def users(current_user):
     try:
-        results = queries.getAllUsers()
+        print("Current User : ", current_user.admin)
 
-        users = []
+        if current_user.admin:
+            results = queries.getAllUsers()
 
-        for user in results:
-            users.append(
-                {
-                    "id": user.id,
-                    "username": user.username,
-                    "name": user.name,
-                    "email": user.email,
-                    "image": user.image,
-                    "birthday": user.birthday,
-                    "admin": user.admin,
-                    "activated": user.activated,
-                    "following": len(user.following),
-                    "followers": len(user.followers),
-                    "countOfShares": len(user.pointed_shares)
-                }
-            )
+            users = []
+
+            for user in results:
+                users.append(
+                    {
+                        "id": user.id,
+                        "username": user.username,
+                        "name": user.name,
+                        "email": user.email,
+                        "image": user.image,
+                        "birthday": user.birthday,
+                        "admin": user.admin,
+                        "activated": user.activated,
+                        "following": len(user.following),
+                        "followers": len(user.followers),
+                        "countOfShares": len(user.pointed_shares)
+                    }
+                )
+        else:
+            return jsonify({"success": False, "error": "User is not admin"})
 
         return jsonify({"data": users})
     except Exception as e:
@@ -51,6 +56,8 @@ def user(current_user, id):
         print("USER POINTED SHARES : ", user.pointed_shares)
 
         sharesOfUser = shareQueries.sharesOfAuthor(id)
+
+        print("FOLLOWINGS_SHARES : ", user.following)
 
         result = {
             "id": user.id,
@@ -285,7 +292,12 @@ def follow(current_user):
                 else:
                     result = queries.follow(current_user.id, userId)
 
-                    return jsonify({"message": result})
+                    if result == "followed":
+                        return jsonify({"message": result}), 200
+                    elif result == "already followed":
+                        return jsonify({"success": False, "error": result}), 502
+                    else:
+                        return jsonify({"success": False, "error": "There is an error :("}), 503
             else:
                 return jsonify({"success": False, "error": "There is an error :("}), 502
         else:
@@ -421,81 +433,106 @@ def login():
 
                     followings = []
                     followers = []
-                    sharesOfUserList = []
+                    shareListOfUser = getShareListOfUser(user.id)
 
-                    for followingUser in user.following:
-                        followings.append({
-                            "Id": followingUser.id,
-                            "Username": followingUser.username,
-                            "Name": followingUser.name,
-                            "Email": followingUser.email,
-                            "Image": followingUser.image,
-                            "Birthday": followingUser.birthday,
-                        })
+                    try:
+                        for followingUser in user.following:
+                            followingsShares = []
 
-                    for followerUser in user.followers:
-                        followers.append({
-                            "Id": followerUser.id,
-                            "Username": followerUser.username,
-                            "Name": followerUser.name,
-                            "Email": followerUser.email,
-                            "Image": followerUser.image,
-                            "Birthday": followerUser.birthday,
-                        })
+                            try:
+                                sharesOfFollowingUser = shareQueries.sharesOfAuthor(followingUser.id)
 
-                    starredUserList = []
-                    for share in sharesOfUser:
-                        for starredUser in share.pointed_users:
-                            starredUserList.append({
-                                "id": starredUser.id,
-                                "username": starredUser.username,
-                                "image": starredUser.image,
-                                "name": starredUser.name
+                                if len(sharesOfFollowingUser) > 0:
+                                    for followingsShare in sharesOfFollowingUser:
+                                        followingsShares.append({
+                                            "id": followingsShare.id,
+                                            "content": followingsShare.content,
+                                            "point": len(followingsShare.pointed_users),
+                                            "author": followingsShare.author,
+                                        })
+                                    
+                                followings.append({
+                                    "Id": followingUser.id,
+                                    "Username": followingUser.username,
+                                    "Name": followingUser.name,
+                                    "Email": followingUser.email,
+                                    "Image": followingUser.image,
+                                    "Birthday": followingUser.birthday,
+                                    "Shares": followingsShares
+                                })
+                            except Exception as e:
+                                print("Error 3: ", str(e))
+
+                        for followerUser in user.followers:
+                            followersShares = []
+
+                            try:
+                                sharesOfFollowerUser = shareQueries.sharesOfAuthor(followingUser.id)
+
+                                if len(sharesOfFollowerUser) > 0:
+                                    for followersShare in sharesOfFollowerUser:
+                                        followersShares.append({
+                                            "id": followersShare.id,
+                                            "content": followersShare.content,
+                                            "point": len(followersShare.pointed_users),
+                                            "author": followersShare.author,
+                                        })
+                            except Exception as e:
+                                print("Error 2: ", str(e))
+
+                            followers.append({
+                                "Id": followerUser.id,
+                                "Username": followerUser.username,
+                                "Name": followerUser.name,
+                                "Email": followerUser.email,
+                                "Image": followerUser.image,
+                                "Birthday": followerUser.birthday,
+                                "Shares": followersShares
                             })
 
-                        sharesOfUserList.append({
-                            "Id": share.id,
-                            "Content": share.content,
-                            "PointedUsers": starredUserList
-                        })
+                        starredUserList = []
 
-                    starredShareList = []
-                    for share in user.pointed_shares:
-                        starredShareList.append({
-                            "id": share.id,
-                            "content": share.content,
-                            "point": share.point,
-                            "author_id": share.author,
-                            "pointed_users": [
-                                {
-                                    "user_id": pointedUser.id,
-                                    "username": pointedUser.username,
-                                }
-                                for pointedUser in share.pointed_users
-                            ]
-                        })
+                        starredShareList = []
+                        for share in user.pointed_shares:
+                            starredShareList.append({
+                                "id": share.id,
+                                "content": share.content,
+                                "point": share.point,
+                                "author_id": share.author,
+                                "pointed_users": [
+                                    {
+                                        "user_id": pointedUser.id,
+                                        "username": pointedUser.username,
+                                    }
+                                    for pointedUser in share.pointed_users
+                                ]
+                            })
 
-                    totalPoints = len(starredUserList)
+                        totalPoints = len(starredUserList)
 
-                    user = {
-                        "id": user.id,
-                        "name": user.name,
-                        "username": user.username,
-                        "token": token,
-                        "email": user.email,
-                        "image": user.image,
-                        "followings": followings,
-                        "followers": followers,
-                        "shares": sharesOfUserList,
-                        "totalPoints": totalPoints,
-                        "starred_shares": user.pointed_shares
-                    }
+                        user = {
+                            "id": user.id,
+                            "name": user.name,
+                            "username": user.username,
+                            "token": token,
+                            "email": user.email,
+                            "image": user.image,
+                            "followings": followings,
+                            "followers": followers,
+                            "shares": shareListOfUser,
+                            "totalPoints": totalPoints,
+                            "starred_shares": user.pointed_shares,
+                        }
 
-                    response = {"success": True, "data": user, "message": ""}
+                        response = {"success": True, "data": user, "message": ""}
 
-                    print("RESPONSE :: ", response)
+                        print("RESPONSE :: ", response)
 
-                    return jsonify(response)
+                        return jsonify(response)
+                    except Exception as e:
+                        print("ERROR0 : ", str(e))
+
+                        return jsonify({"message": "There is a problem :("}), 503
                 else:
                     return jsonify({"message": "Passwords not matched"}), 401
             else:
@@ -503,7 +540,7 @@ def login():
         else:
             return jsonify({"message": "This is not a Post request"}), 405
     except Exception as e:
-        print("ERROR : ", str(e))
+        print("ERROR1 : ", str(e))
 
         return jsonify({"message": "There is a problem :("}), 503
 
@@ -520,3 +557,17 @@ def logout(current_user):
         print(error_message)
 
         return jsonify({"error": error_message}), 503
+    
+def getShareListOfUser(userId):
+    shareListOfUser = []
+    sharesOfUser = shareQueries.sharesOfAuthor(userId)
+
+    for share in sharesOfUser:
+        shareListOfUser.append({
+            "Id": share.id,
+            "Content": share.content,
+            "Point": len(share.pointed_users)
+        })
+
+    return shareListOfUser
+
