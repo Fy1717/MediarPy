@@ -53,12 +53,6 @@ def user(current_user, id):
     try:
         user = queries.getOneUser(id)
 
-        print("USER POINTED SHARES : ", user.pointed_shares)
-
-        sharesOfUser = shareQueries.sharesOfAuthor(id)
-
-        print("FOLLOWINGS_SHARES : ", user.following)
-
         result = {
             "id": user.id,
             "username": user.username,
@@ -76,6 +70,7 @@ def user(current_user, id):
                     "Email": followingUser.email,
                     "Image": followingUser.image,
                     "Birthday": followingUser.birthday,
+                    "FollowingsShares": getShareListOfUser(followingUser.id)
                 }
                 for followingUser in user.following
             ],
@@ -87,17 +82,11 @@ def user(current_user, id):
                     "Email": followerUser.email,
                     "Image": followerUser.image,
                     "Birthday": followerUser.birthday,
+                    "FollowersShares": getShareListOfUser(followerUser.id),
                 }
                 for followerUser in user.followers
             ],
-            "shares": [
-                {
-                    "Id": share.id,
-                    "Content": share.content,
-                    "Point": share.point,
-                }
-                for share in sharesOfUser
-            ],
+            "shares": getShareListOfUser(user.id),
             "starred_shares": [
                 {
                     "Id": share.id,
@@ -182,8 +171,6 @@ def update(current_user, id):
                 }
 
                 updateMessageFromDbProcess = queries.updateUser(user)
-
-                print("UPDATE MESSAGE : ", updateMessageFromDbProcess)
 
                 if updateMessageFromDbProcess == "User Updated Successfully":
                     response = jsonify({"message": updateMessageFromDbProcess})
@@ -398,26 +385,16 @@ def pointShareBack(current_user):
 def login():
     try:
         if request.method == "POST":
-            # print("XXXXXXXXXX")
             username = request.form.get("username")
             password = request.form.get("password")
 
-            # print("Username : ", username)
-            # print("Password : ", password)
-
             if username == None and password == None:
-                # print("yyyyyyyyy")
                 return jsonify({"success": False})
 
             user = queries.getUserByUsername(username=username)
 
             if user != None:
-                # print("DB DEN GELEN USER IN PASSWORD U : ", user.password)
-                # print("İSTEKTEN GELEN PASSWORD : ", password)
-
                 if check_password_hash(user.password, password):
-                    # print("user ıd ", user.id)
-
                     token = jwt.encode(
                         {
                             "id": user.id,
@@ -429,66 +406,16 @@ def login():
 
                     session["token"] = token
 
-                    sharesOfUser = shareQueries.sharesOfAuthor(user.id)
-
                     followings = []
                     followers = []
                     shareListOfUser = getShareListOfUser(user.id)
 
                     try:
                         for followingUser in user.following:
-                            followingsShares = []
-
-                            try:
-                                sharesOfFollowingUser = shareQueries.sharesOfAuthor(followingUser.id)
-
-                                if len(sharesOfFollowingUser) > 0:
-                                    for followingsShare in sharesOfFollowingUser:
-                                        followingsShares.append({
-                                            "id": followingsShare.id,
-                                            "content": followingsShare.content,
-                                            "point": len(followingsShare.pointed_users),
-                                            "author": followingsShare.author,
-                                        })
-                                    
-                                followings.append({
-                                    "Id": followingUser.id,
-                                    "Username": followingUser.username,
-                                    "Name": followingUser.name,
-                                    "Email": followingUser.email,
-                                    "Image": followingUser.image,
-                                    "Birthday": followingUser.birthday,
-                                    "Shares": followingsShares
-                                })
-                            except Exception as e:
-                                print("Error 3: ", str(e))
+                            followers.append(getConnectingUserInfo(followingUser.id))
 
                         for followerUser in user.followers:
-                            followersShares = []
-
-                            try:
-                                sharesOfFollowerUser = shareQueries.sharesOfAuthor(followingUser.id)
-
-                                if len(sharesOfFollowerUser) > 0:
-                                    for followersShare in sharesOfFollowerUser:
-                                        followersShares.append({
-                                            "id": followersShare.id,
-                                            "content": followersShare.content,
-                                            "point": len(followersShare.pointed_users),
-                                            "author": followersShare.author,
-                                        })
-                            except Exception as e:
-                                print("Error 2: ", str(e))
-
-                            followers.append({
-                                "Id": followerUser.id,
-                                "Username": followerUser.username,
-                                "Name": followerUser.name,
-                                "Email": followerUser.email,
-                                "Image": followerUser.image,
-                                "Birthday": followerUser.birthday,
-                                "Shares": followersShares
-                            })
+                            followers.append(getConnectingUserInfo(followerUser.id))
 
                         starredUserList = []
 
@@ -554,6 +481,7 @@ def logout(current_user):
         return jsonify({"success": True, "message": "User Logout"})
     except Exception as e:
         error_message = f"Logout Process Error: {e}\n{traceback.format_exc()}"
+        
         print(error_message)
 
         return jsonify({"error": error_message}), 503
@@ -570,4 +498,19 @@ def getShareListOfUser(userId):
         })
 
     return shareListOfUser
+
+def getConnectingUserInfo(userId):
+    userFromDb = queries.getOneUser(userId)
+    
+    user = {
+        "Id": userFromDb.id,
+        "Username": userFromDb.username,
+        "Name": userFromDb.name,
+        "Email": userFromDb.email,
+        "Image": userFromDb.image,
+        "Birthday": userFromDb.birthday,
+        "Shares": getShareListOfUser(userId)
+    }
+    
+    return user
 

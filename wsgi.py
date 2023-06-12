@@ -27,7 +27,6 @@ app.register_blueprint(apiShares)
 def hello_world():
     return jsonify({"backend": "FY", "frontend": "OD"})
 
-
 @app.route("/profile")
 def profile():
     users = [

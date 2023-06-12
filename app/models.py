@@ -3,7 +3,6 @@ from email.policy import default
 from app import db
 from datetime import date
 
-
 # -------------------------------------------------------
 
 @dataclass
@@ -88,7 +87,6 @@ class Share(db.Model):
             return []
 
         return result
-
 
 @dataclass
 class User(db.Model):
@@ -317,26 +315,6 @@ class User(db.Model):
             print("ERROR --> ", e)
 
             return "couldnt back point"
-        
-    """ @classmethod
-    def pointed_shares_of_user(cls, user_id):
-        try:
-            shares = Share.query.filter_by(author=user_id).all()
-            user = cls.query.get(user_id)
-
-            print("DB .. user : ", user)
-            print("DB .. star table : ", user.pointed_shares)
-
-            user.
-
-            db.session.commit()
-
-            return "pointed successfully"
-        except Exception as e:
-            print("HATA --> ", e)
-
-            return "not pointed"  """
-
 
 user_following = db.Table(
     "user_following",
@@ -354,10 +332,3 @@ user_pointed_shares = db.Table(
         Share.id), primary_key=True),
 )
 
-""" shares_starred_users = db.Table(
-    "shares_starred_users",
-    db.Model.metadata,
-    db.Column("user_id", db.Integer, db.ForeignKey(User.id), primary_key=True),
-    db.Column("share_id", db.Integer, db.ForeignKey(
-        Share.id), primary_key=True),
-) """

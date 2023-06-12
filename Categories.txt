@@ -1,0 +1,14 @@
+1- Eğitim
+2- Sağlık
+3- Siyaset
+4- Tarih
+5- Spor
+6- Kişisel Gelişim
+7- Eğlence
+8- Yemek
+9- Finans
+10- Gündem
+11- Moda
+12- Sanat
+13- Bilim
+14- Teknoloji

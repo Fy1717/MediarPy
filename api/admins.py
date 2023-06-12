@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request
 from app.jwtAuthorize import login_required
 from app.models import User
+from .users import getConnectingUserInfo
 
 apiAdmins = Blueprint("apiAdmins", __name__, url_prefix="/api/admins")
 queries = User
@@ -8,14 +9,22 @@ queries = User
 
 @apiAdmins.route("/")
 @login_required
-def admins(current_user):
+def admins(current_admin):
     try:
-        currentUserIsAdmin = queries.getOneUser(current_user.id)
-
+        currentUserIsAdmin = queries.getOneUser(current_admin.id)
+        
         if currentUserIsAdmin.admin == True:
             results = queries.getAllAdmins()
 
             admins = []
+            followers = []
+            followings = []
+            
+            for followerUser in currentUserIsAdmin.followers:
+                followers.append(getConnectingUserInfo(followerUser.id))
+            
+            for followingUser in currentUserIsAdmin.following:
+                followers.append(getConnectingUserInfo(followingUser.id))
 
             for admin in results:
                 admins.append(
@@ -26,10 +35,9 @@ def admins(current_user):
                         "email": admin.email,
                         "image": admin.image,
                         "birthday": admin.birthday,
-                        "admin": admin.admin,
                         "activated": admin.activated,
-                        "following": len(admin.following),
-                        "followers": len(admin.followers),
+                        "following": followings,
+                        "followers": followers,
                     }
                 )
 
@@ -40,6 +48,7 @@ def admins(current_user):
 
         return jsonify(response)
     except Exception as e:
+        print("ERROR : ", str(e))
         response = {"success": False, "error": "Admin is not found"}, 404
 
         return jsonify(response)
@@ -47,14 +56,23 @@ def admins(current_user):
 
 @apiAdmins.route("/<int:id>")
 @login_required
-def admin(current_user, id):
+def admin(current_admin, id):
     try:
-        currentUserIsAdmin = queries.getOneUser(current_user.id)
+        currentUserIsAdmin = queries.getOneUser(current_admin.id)
 
         if currentUserIsAdmin.admin == True:
             admin = queries.getOneAdmin(id)
 
             if admin != None:
+                followers = []
+                followings = []
+                
+                for followerUser in admin.followers:
+                    followers.append(getConnectingUserInfo(followerUser.id))
+                
+                for followingUser in admin.following:
+                    followers.append(getConnectingUserInfo(followingUser.id))
+                    
                 result = {
                     "id": admin.id,
                     "username": admin.username,
@@ -64,28 +82,8 @@ def admin(current_user, id):
                     "admin": admin.admin,
                     "activated": admin.activated,
                     "email": admin.email,
-                    "followings": [
-                        {
-                            "Id": followingUser.id,
-                            "Username": followingUser.username,
-                            "Name": followingUser.name,
-                            "Email": followingUser.email,
-                            "Image": followingUser.image,
-                            "Birthday": followingUser.birthday,
-                        }
-                        for followingUser in admin.following
-                    ],
-                    "followers": [
-                        {
-                            "Id": followerUser.id,
-                            "Username": followerUser.username,
-                            "Name": followerUser.name,
-                            "Email": followerUser.email,
-                            "Image": followerUser.image,
-                            "Birthday": followerUser.birthday,
-                        }
-                        for followerUser in admin.followers
-                    ],
+                    "followings": followings,
+                    "followers": followers,
                 }
 
                 if result["admin"] == True and (
