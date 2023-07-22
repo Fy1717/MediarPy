@@ -4,9 +4,8 @@
 # !/usr/local/bin/python
 # -*- coding: utf-16 -*-
 
-from flask import jsonify, request
+from flask import jsonify
 from app import createApp
-from app.models import db
 from flask_cors import CORS
 from app.initialize_db import createDB
 
@@ -47,7 +46,6 @@ def profile():
     ]
 
     return jsonify(users)
-
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=8081)
