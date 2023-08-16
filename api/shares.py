@@ -3,6 +3,8 @@ from app.models import Share
 from app.models import User
 from app.jwtAuthorize import login_required
 
+import traceback
+
 apiShares = Blueprint("apiShares", __name__, url_prefix="/api/shares")
 shareQueries = Share
 userQueries = User
@@ -166,3 +168,4 @@ def update(current_user):
         return response
     except Exception as e:
         return jsonify({"success": False, "error": "There is an error.."}), 502
+    

@@ -408,14 +408,18 @@ def login():
 
                     followings = []
                     followers = []
+                    followingsIdList = []
+                    followersIdList = []
                     shareListOfUser = getShareListOfUser(user.id)
 
                     try:
                         for followingUser in user.following:
                             followers.append(getConnectingUserInfo(followingUser.id))
+                            followingsIdList.append(followingUser.id)
 
                         for followerUser in user.followers:
                             followers.append(getConnectingUserInfo(followerUser.id))
+                            followersIdList.append(followerUser.id)
 
                         starredUserList = []
 
@@ -498,6 +502,52 @@ def getShareListOfUser(userId):
         })
 
     return shareListOfUser
+
+@apiUsers.route("/sharesOfFollowedUsers/<int:id>", methods=["GET", "POST"])
+@login_required
+def getShareListOfUsers(current_user, id):
+    if current_user.id == id:        
+        user = queries.getOneUser(id)
+        
+        userIdList = []
+        allShares = []
+            
+        print("FOLLOWING USERS : ", user.following)
+        
+        if len(user.following) == 0:
+            return jsonify({"data": []}), 200
+        
+        for followingUser in user.following:
+            userIdList.append(followingUser.id)
+        
+        for userId in userIdList:
+            shareListOfUser = []
+            sharesOfUser = shareQueries.sharesOfAuthor(userId)
+
+            for share in sharesOfUser:
+                shareListOfUser.append({
+                    "Id": share.id,
+                    "UserId": userId,
+                    "Content": share.content,
+                    "Point": len(share.pointed_users)
+                })
+                
+            allShares.append(shareListOfUser)
+
+        return allShares
+    
+    else:
+        response = (
+            jsonify(
+                {
+                    "success": False,
+                    "error": "You cant see another users information",
+                }
+            ),
+            401,
+        )
+        
+        return response
 
 def getConnectingUserInfo(userId):
     userFromDb = queries.getOneUser(userId)

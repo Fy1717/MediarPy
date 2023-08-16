@@ -126,6 +126,15 @@ class User(db.Model):
             results = []
 
         return results
+    
+    @classmethod
+    def get_followed_users_shares(cls):
+        followed_users = cls.following 
+        followed_users_ids = [user.id for user in followed_users]
+
+        followed_users_shares = Share.query.filter(Share.author.in_(followed_users_ids)).all()
+
+        return followed_users_shares
 
     @classmethod
     def addUser(cls, user):
