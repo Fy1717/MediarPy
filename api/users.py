@@ -414,7 +414,7 @@ def login():
 
                     try:
                         for followingUser in user.following:
-                            followers.append(getConnectingUserInfo(followingUser.id))
+                            followings.append(getConnectingUserInfo(followingUser.id))
                             followingsIdList.append(followingUser.id)
 
                         for followerUser in user.followers:

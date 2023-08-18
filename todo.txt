@@ -1,0 +1,7 @@
+1- toast mesajların görünümünü özelleştir ve short time yap
+2- login isteğinde dönen starred shares ı düzelt
+3- share eklenmesi için minimum 30 karakter sınırı koy
+4- kullanıcının takip edilip edilmediğine dair true false döndüren bir endpoint eklenmesi
+(buna göre share detail sayfasında follow veya unfollow olcak)
+5- share ın hangi kullanıcıya ait olduğunu veren bir endpoint yaz.
+(buna göre kullanıcının profil sayfasına gidilebilecek, share detay sayfasından veya arama alanından)
