@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from email.policy import default
 from app import db
 from datetime import date
+import traceback;
 
 # -------------------------------------------------------
 
@@ -222,7 +223,7 @@ class User(db.Model):
                 return "followed"
                 
         except Exception as e:
-            print("HATA --> ", e)
+            print("HATA 1 --> ", e)
 
             return "not followed"
 
@@ -298,6 +299,8 @@ class User(db.Model):
                 print("DB .. share : ", share_id)
                 print("DB .. star table : ", user.pointed_shares)
 
+                print("user.pointed_shares : ", user.pointed_shares)
+
                 user.pointed_shares.append(share)
 
                 db.session.commit()
@@ -306,7 +309,9 @@ class User(db.Model):
             else:
                 return "user cannot pointed him shares"
         except Exception as e:
-            print("HATA --> ", e)
+            error_message = f"Star Share Process Error: {e}\n{traceback.format_exc()}"
+                
+            print("HATA 2 --> ", error_message)
 
             return "not pointed"
 
@@ -316,12 +321,16 @@ class User(db.Model):
             user = cls.query.get(user_id)
             share = Share.query.get(share_id)
 
+            print("user.pointed_shares : ", user.pointed_shares)
+            
             user.pointed_shares.remove(share)
             db.session.commit()
 
             return "pointed back successfully"
         except Exception as e:
-            print("ERROR --> ", e)
+            error_message = f"Star Share Process Error: {e}\n{traceback.format_exc()}"
+                    
+            print("ERROR --> ", error_message)
 
             return "couldnt back point"
 

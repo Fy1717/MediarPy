@@ -336,7 +336,7 @@ def pointShare(current_user):
             print("CURRENT USER ID : ", current_user.id)
             print("SHARE ID : ", shareId)
 
-            if current_user.id != None and shareId != None:  # kullanıcı kendi paylaşamasın amacı ile
+            if current_user.id != None and shareId != None:  # kullanıcı kendi paylaşını beğenemesin amacı ile
                 print("shareId : ", shareId)
 
                 result = queries.point_share(current_user.id, shareId)
@@ -363,17 +363,23 @@ def pointShare(current_user):
 def pointShareBack(current_user):
     try:
         if request.method == "POST":
-            shareId = request.args.get("shareId")
+            shareId = request.form.get("shareId")
 
+            print("CURRENT USER ID : ", current_user.id)
+            print("SHARE ID : ", shareId)
+            
+            print("CHECK : ", (current_user.id != None and shareId != None))
+            print("CHECK : ", (current_user.id), shareId)
+            
             if current_user.id != None and shareId != None:
                 result = queries.point_share_back(current_user.id, shareId)
 
                 if result == "pointed back successfully":
                     return jsonify({"success": True, "message": result})
                 else:
-                    return jsonify({"success": False, "error": "There is an error :("}), 502
+                    return jsonify({"success": False, "error": "There is an error 1 :("}), 502
             else:
-                return jsonify({"success": False, "error": "There is an error :("}), 502
+                return jsonify({"success": False, "error": "There is an error :( 2"}), 502
         else:
             return jsonify({"success": False, "error": "This is not a post request"}), 405
 
@@ -438,6 +444,7 @@ def login():
                                     for pointedUser in share.pointed_users
                                 ]
                             })
+                            
 
                         totalPoints = len(starredUserList)
 
@@ -452,7 +459,7 @@ def login():
                             "followers": followers,
                             "shares": shareListOfUser,
                             "totalPoints": totalPoints,
-                            "starred_shares": user.pointed_shares,
+                            "starred_shares": starredShareList,
                         }
 
                         response = {"success": True, "data": user, "message": ""}
